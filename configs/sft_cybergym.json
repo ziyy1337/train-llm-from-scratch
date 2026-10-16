@@ -1,0 +1,20 @@
+{
+  "pretrained_ckpt": "models/500m_cybergym.pt",
+  "data_path": "data/sft_cyber_packed.h5",
+  "dev_path": "data/sft_cyber_dev_packed.h5",
+  "out_ckpt": "models/sft_cybergym.pt",
+  "batch_size": 8,
+  "grad_accum": 4,
+  "epochs": 2,
+  "max_steps": -1,
+  "eval_steps": 100,
+  "warmup_steps": 20,
+  "lr": 1e-05,
+  "min_lr": 1e-06,
+  "weight_decay": 0.0,
+  "grad_clip": 1.0,
+  "save_every": 250,
+  "lora_rank": 0,
+  "lora_alpha": 16.0,
+  "lora_dropout": 0.0
+}

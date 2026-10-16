@@ -80,6 +80,14 @@ PRESETS: dict[str, dict[str, Any]] = {
         "t_train_steps": 200000, "t_eval_steps": 1000, "t_eval_iters": 250, "t_lr": 5e-4,
         "t_lr_decayed": 5e-5, "t_lr_decay_step": 50000, "t_out_path": "models/transformer_B.pt",
     },
+    # CyberGYM 500M-parameter base: PILE_* paths are a placeholder only; prepare_cyber_data.py
+    # (TASK 3) produces the real CyberGYM h5 files that should end up here.
+    "500m": {
+        "vocab_size": 50304, "context_length": 512, "n_embed": 1536, "n_head": 12, "n_blocks": 15,
+        "train_path": PILE_TRAIN, "dev_path": PILE_DEV, "t_batch_size": 32, "t_context_length": 512,
+        "t_train_steps": 15000, "t_eval_steps": 1000, "t_eval_iters": 50, "t_lr": 3e-4,
+        "t_lr_decayed": 3e-5, "t_lr_decay_step": 12000, "t_out_path": "models/500m_cybergym.pt",
+    },
 }
 
 
