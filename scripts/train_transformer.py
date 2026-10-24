@@ -276,7 +276,7 @@ def save_training_checkpoint(
     ) as tmp_file:
         tmp_path = tmp_file.name
     try:
-        torch.save(payload, tmp_path)
+        torch.save(payload, tmp_path, _use_new_zipfile_serialization=False)
         os.replace(tmp_path, path)
     except Exception:
         if os.path.exists(tmp_path):
