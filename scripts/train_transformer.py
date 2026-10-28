@@ -238,6 +238,7 @@ def save_training_checkpoint(
     train_loss: float | None = None,
     dev_loss: float | None = None,
     is_final: bool = False,
+    save_optimizer: bool = True,
 ) -> None:
     """
     Save model, optimizer, loss history, and LR schedule metadata.
@@ -248,7 +249,7 @@ def save_training_checkpoint(
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     payload = {
         'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict() if save_optimizer else None,
         'losses': losses,
         'train_loss': train_loss,
         'dev_loss': dev_loss,
@@ -740,6 +741,7 @@ def main() -> None:
                     step=step,
                     train_loss=as_float(latest_train_loss),
                     dev_loss=as_float(latest_dev_loss),
+                    save_optimizer=False,
                 )
                 prune_old_checkpoints(checkpoint_dir, int(keep_last or 0))
                 print(f"Saved checkpoint to {path}")
