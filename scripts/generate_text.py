@@ -43,13 +43,15 @@ from src.tokenizer import safe_decode, tokenizer_from_spec, tokenizer_spec  # no
 def load_trained_model(model_path: str, device: str):
     """Rebuild the model, its tokenizer and its training window from a checkpoint."""
     checkpoint = load_checkpoint(model_path, map_location="cpu")
-    model_cfg = {**config, **model_config_from_checkpoint(checkpoint)}
+    ckpt_cfg = model_config_from_checkpoint(checkpoint)
+    model_cfg = {**config, **ckpt_cfg}
     model = build_model(model_cfg)
     load_model_weights(model, model_state_from_checkpoint(checkpoint), source=model_path)
     tokenizer = tokenizer_from_spec(model_cfg.get("tokenizer"))
     # The legacy trainer may train on windows shorter than the model's context (t_context_length).
     # Positions it never saw have untrained embeddings, so generation stays inside that window.
-    window = min(model_cfg.get("t_context_length") or model_cfg["context_length"], model_cfg["context_length"])
+    # Post-training checkpoints have no t_context_length: use the full model context.
+    window = min(ckpt_cfg.get("t_context_length") or model_cfg["context_length"], model_cfg["context_length"])
     return model.to(device).eval(), tokenizer, window, model_cfg
 
 
