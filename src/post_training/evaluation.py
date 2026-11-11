@@ -32,6 +32,8 @@ def batched_generate(
     top_p: float | None = None,
     greedy: bool = False,
     micro_batch: int = 32,
+    repetition_penalty: float = 1.0,
+    repetition_window: int = 128,
 ) -> list[str]:
     """
     Generate a response string for each tokenized prompt, returned in input order.
@@ -63,7 +65,9 @@ def batched_generate(
             continue
         batch = torch.tensor([prompts[k] for k in idxs], dtype=torch.long, device=device)
         rb = generate_with_logprobs(model, batch, budget, temperature=temperature,
-                                    top_k=top_k, top_p=top_p, stop_tokens=(EOT_ID,), pad_id=EOT_ID)
+                                    top_k=top_k, top_p=top_p, stop_tokens=(EOT_ID,), pad_id=EOT_ID,
+                                    repetition_penalty=repetition_penalty,
+                                    repetition_window=repetition_window)
         gen = rb.sequences[:, L:]
         for row, k in enumerate(idxs):
             toks = gen[row].tolist()

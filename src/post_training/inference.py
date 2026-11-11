@@ -53,6 +53,8 @@ def generate_reply(
     top_k: int | None = None,
     top_p: float | None = 0.95,
     greedy: bool = False,
+    repetition_penalty: float = 1.0,
+    repetition_window: int = 128,
 ) -> str:
     """
     Generate a response to ``user_text``.
@@ -65,7 +67,9 @@ def generate_reply(
     if raw:
         ids = get_tokenizer().encode_ordinary(user_text)
         out = batched_generate(model, [ids], max_new_tokens, device=device, temperature=temperature,
-                               top_k=top_k, top_p=top_p, greedy=greedy)
+                               top_k=top_k, top_p=top_p, greedy=greedy,
+                               repetition_penalty=repetition_penalty,
+                               repetition_window=repetition_window)
         return out[0]
 
     messages = []
@@ -74,5 +78,7 @@ def generate_reply(
     messages.append({"role": "user", "content": user_text})
     prompt_ids = encode_prompt(messages)
     out = batched_generate(model, [prompt_ids], max_new_tokens, device=device, temperature=temperature,
-                           top_k=top_k, top_p=top_p, greedy=greedy)
+                           top_k=top_k, top_p=top_p, greedy=greedy,
+                           repetition_penalty=repetition_penalty,
+                           repetition_window=repetition_window)
     return out[0]

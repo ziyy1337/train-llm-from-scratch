@@ -40,6 +40,10 @@ def main():
     p.add_argument("--greedy", action="store_true", help="deterministic argmax decoding")
     p.add_argument("--device", default="auto", help="auto (CUDA, then Apple MPS, then CPU), cuda, mps or cpu")
     p.add_argument("--int8", action="store_true", help="store the linear weights as int8 (about 4x smaller)")
+    p.add_argument("--repetition_penalty", type=float, default=1.15,
+                   help="penalise tokens already in the recent window (1.0 = off)")
+    p.add_argument("--repetition_window", type=int, default=128,
+                   help="how many recent tokens the repetition penalty looks at")
     args = p.parse_args()
     args.device = resolve_device(args.device)
 
@@ -53,7 +57,9 @@ def main():
     def reply(text):
         return generate_reply(model, text, device=args.device, system=args.system, raw=args.raw,
                               max_new_tokens=args.max_new_tokens, temperature=args.temperature,
-                              top_p=args.top_p if args.top_p < 1 else None, top_k=args.top_k, greedy=args.greedy)
+                              top_p=args.top_p if args.top_p < 1 else None, top_k=args.top_k, greedy=args.greedy,
+                              repetition_penalty=args.repetition_penalty,
+                              repetition_window=args.repetition_window)
 
     if args.prompt is not None:
         print(reply(args.prompt))

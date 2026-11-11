@@ -87,6 +87,8 @@ def generate_with_logprobs(
     pad_id: int = EOT_ID,
     context_length: int | None = None,
     use_cache: bool = True,
+    repetition_penalty: float = 1.0,
+    repetition_window: int = 128,
 ) -> RolloutBatch:
     """
     Autoregressively sample a completion for each prompt and record per-token log-probs.
@@ -127,6 +129,16 @@ def generate_with_logprobs(
             assert isinstance(backbone, ModernTransformer)
             new_tokens = sequences if t == 0 else sequences[:, -1:]
             logits = backbone.lm_head(backbone.forward_hidden(new_tokens, cache)[:, -1, :])
+
+        # Repetition penalty: push down logits of tokens already in the recent window.
+        if repetition_penalty and repetition_penalty != 1.0:
+            recent = sequences[:, -repetition_window:]
+            for b in range(logits.size(0)):
+                ids = torch.unique(recent[b])
+                vals = logits[b, ids]
+                logits[b, ids] = torch.where(
+                    vals > 0, vals / repetition_penalty, vals * repetition_penalty
+                )
 
         # Full-distribution log-prob at the sampling temperature (matches recompute).
         full_logprobs = F.log_softmax(logits.float() / max(temperature, 1e-6), dim=-1)
