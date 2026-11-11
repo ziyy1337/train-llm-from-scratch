@@ -1,7 +1,7 @@
 """
 Download + tokenize Pile-uncopyrighted shards into a single flat-token HDF5 for
 pretraining. Faster than the original ``data_preprocess.py`` (which resizes the HDF5 per
-document): here we stream-decompress, batch-tokenize with tiktoken, and write tokens to
+document): here we stream-decompress, batch-tokenize with the GLM-5.3 tokenizer, and write tokens to
 the HDF5 in large chunks.
 
 Writes under data/ by default (pass --out / --raw_dir to use another disk).
@@ -25,14 +25,13 @@ import os
 import h5py
 import numpy as np
 import requests
-import tiktoken
+from src.tokenizer.hf_tokenizer import HFTokenizer
 import zstandard as zstd
 from tqdm import tqdm
 
 BASE_URL = "https://huggingface.co/datasets/monology/pile-uncopyrighted/resolve/main"
-EOT_ID = 50256
 WRITE_CHUNK = 8_000_000  # flush tokens to HDF5 in ~8M-token chunks
-ENC_BATCH = 1024          # documents per tiktoken batch-encode
+ENC_BATCH = 1024          # documents per tokenizer batch-encode
 
 
 def shard_urls(split: str, num_shards: int) -> list[str]:
@@ -74,7 +73,8 @@ def iter_texts(zst_path: str):
 
 
 def tokenize_to_h5(zst_paths: list[str], out_path: str, max_tokens: int | None) -> int:
-    enc = tiktoken.get_encoding("r50k_base")
+    enc = HFTokenizer("data/tokenizers/tokenizer.json")
+    EOT_ID = enc.eot_token
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     total = 0
     buf: list[int] = []
@@ -98,7 +98,7 @@ def tokenize_to_h5(zst_paths: list[str], out_path: str, max_tokens: int | None) 
             for txt in pbar:
                 docs.append(txt)
                 if len(docs) >= ENC_BATCH:
-                    for ids in enc.encode_ordinary_batch(docs):
+                    for ids in enc.encode_batch(docs):
                         buf.extend(ids)
                         buf.append(EOT_ID)
                     docs = []
@@ -108,7 +108,7 @@ def tokenize_to_h5(zst_paths: list[str], out_path: str, max_tokens: int | None) 
                     if max_tokens and total >= max_tokens:
                         break
             if docs:
-                for ids in enc.encode_ordinary_batch(docs):
+                for ids in enc.encode_batch(docs):
                     buf.extend(ids)
                     buf.append(EOT_ID)
             flush()
